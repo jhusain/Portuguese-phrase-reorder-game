@@ -19,6 +19,9 @@
   --color-border: rgba(148, 163, 184, 0.35);
   --color-primary: #2563eb;
   --color-primary-contrast: #f8fafc;
+  --color-success: #22c55e;
+  --color-success-strong: #15803d;
+  --color-success-contrast: #052e16;
   --shadow-card: 0 32px 120px -64px rgba(15, 23, 42, 0.55);
   --shadow-card-strong: 0 24px 80px -48px rgba(30, 41, 59, 0.55);
   --radius-large: 24px;
@@ -35,6 +38,9 @@
   --color-border: rgba(148, 163, 184, 0.28);
   --color-primary: #60a5fa;
   --color-primary-contrast: #020817;
+  --color-success: #4ade80;
+  --color-success-strong: #22c55e;
+  --color-success-contrast: #022c22;
   --shadow-card: 0 32px 120px -60px rgba(15, 23, 42, 0.85);
   --shadow-card-strong: 0 20px 80px -48px rgba(15, 23, 42, 0.7);
 }
@@ -205,8 +211,13 @@ body {
   font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.01em;
-  cursor: not-allowed;
-  transition: transform 150ms ease, box-shadow 150ms ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease,
+    color 150ms ease;
 }
 
 .button--primary {
@@ -215,14 +226,31 @@ body {
   box-shadow: 0 18px 38px -24px rgba(37, 99, 235, 0.65);
 }
 
+.button--secondary {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--color-primary);
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  box-shadow: 0 16px 32px -24px rgba(37, 99, 235, 0.38);
+}
+
 .button--ghost {
   background: transparent;
   border: 1px solid var(--color-border);
   color: var(--color-text-primary);
 }
 
+.button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.button:not(:disabled):active {
+  transform: translateY(0);
+}
+
 .button:disabled {
-  opacity: 0.85;
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .status {
@@ -255,6 +283,51 @@ body {
 .info__note {
   margin: 1rem 0 0;
   color: var(--color-text-secondary);
+}
+
+.workspace__body {
+  display: grid;
+  gap: 1rem;
+}
+
+.workspace__status {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+}
+
+.workspace__tokens {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.workspace__note {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+}
+
+.workspace__note-title {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+  color: var(--color-text-primary);
+}
+
+.workspace__note-body {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.workspace__controls {
+  align-items: center;
 }
 
 @media (min-width: 48rem) {
