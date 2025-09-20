@@ -38,3 +38,51 @@ At this point the user clicks solve again, and the color of all tokens is set to
 * Create any infrastructure necessary to ensure that when PRS are landed, the app is built and hosted using gh-pages. Assume the app will be hosted at [jhusain.github.io/portuguese-phrase-reorder-game](http://jhusain.github.io/portuguese-phrase-reorder-game) rather than the root domain, so make sure you make any changes required to the build process to allow hosting under a folder like ensuring all references are relative rather than absolute for example.  
 * The app should be available to be installed as a PWA so it can be used without the browser Chrome visible. A service worker should be used to allow the app to be cached and run entirely off-line. However whenever the app opens it should try and download the problems.json file, and only use the cached one if it fails to retrieve it (presumably due to lack of internet connectivity). Feel free to generate an appropriate icon set.
 
+
+## Implementation Plan
+
+1. **Bootstrap Vite + React + TypeScript scaffolding**
+   - Goal: Initialize project configs and entry files needed for a Vite-powered React + TypeScript SPA.
+   - Files: `package.json`, `.gitignore`, `tsconfig.json`, `tsconfig.node.json`, `vite.config.ts`, `index.html`, `src/main.tsx`, `src/App.tsx`, `src/index.css`.
+   - Verification: Run `npm install` followed by `npm run build`; both commands should complete successfully with no errors in the terminal.
+
+2. **Configure GitHub Pages base path awareness**
+   - Goal: Ensure local builds serve correctly from `/portuguese-phrase-reorder-game/` and adjust npm scripts accordingly.
+   - Files: `vite.config.ts`, `package.json`.
+   - Verification: Execute `npm run build` and inspect `dist/index.html` to confirm asset references use relative URLs or the `/portuguese-phrase-reorder-game/` prefix.
+
+3. **Lay out responsive UI shell with theme support**
+   - Goal: Implement mobile-first layout, global styles, and light/dark theming hooks.
+   - Files: `src/App.tsx`, `src/index.css` (or dedicated module files if preferred).
+   - Verification: Start `npm run dev`, open the local URL, resize the viewport, and toggle OS theme to confirm layout stability and theme switching without console errors.
+
+4. **Implement problem data loading and shuffling utilities**
+   - Goal: Load `problems.json`, validate structure with TypeScript types, and expose a deterministic shuffle helper.
+   - Files: `public/problems.json`, `src/data/problems.ts`, `src/types.ts`, `src/utils/shuffle.ts`.
+   - Verification: With dev server running, check browser network panel for a single successful fetch and observe randomized token order across reloads.
+
+5. **Build drag-and-drop/touch token reordering**
+   - Goal: Introduce accessible drag-and-drop interactions with visual insertion indicators for both pointer and touch input.
+   - Files: `package.json` (if adding DnD dependency), `src/components/TokenList.tsx`, `src/components/Token.tsx`, associated CSS modules.
+   - Verification: In the browser, drag tokens with mouse and touch emulation; tokens should reorder correctly and drop indicators should display.
+
+6. **Add solve evaluation, token merging, and feedback styling**
+   - Goal: Compare current order with solution, merge contiguous correct tokens, and present green success styling/notes.
+   - Files: `src/App.tsx`, `src/utils/evaluate.ts`, `src/components/TokenList.tsx`, `src/components/Token.module.css`.
+   - Verification: Trigger the Solve action with partially correct arrangements to confirm correct tokens lock/merge and full solves reveal notes and navigation controls.
+
+7. **Persist session state keyed by problem set hash**
+   - Goal: Store progress (current index and token order) in localStorage using a hash derived from `problems.json`.
+   - Files: `src/hooks/usePersistentState.ts`, `src/App.tsx`, `src/data/problems.ts`.
+   - Verification: Partially solve a problem, reload the page, and confirm state restoration; modify `problems.json` to ensure state resets on content changes.
+
+8. **Provide PWA capabilities with offline support**
+   - Goal: Deliver manifest, icons, service worker caching strategy, and registration logic with network-first fetch for problems.
+   - Files: `public/manifest.webmanifest`, `public/icons/*`, `src/service-worker.ts` (or equivalent), `src/main.tsx`, `vite.config.ts` (if plugin required).
+   - Verification: Run `npm run build` then `npm run preview`; in DevTools, confirm service worker activation, offline availability, and installability via Lighthouse audit.
+
+9. **Automate GitHub Pages deployment**
+   - Goal: Add CI workflow that builds on push to main and publishes `dist/` to the `gh-pages` branch.
+   - Files: `.github/workflows/deploy.yml`, `package.json` (deployment scripts if needed).
+   - Verification: Lint the workflow file (e.g., `npx yaml-lint .github/workflows/deploy.yml`) and, after merging, confirm GitHub Actions run completes successfully with Pages publishing enabled for `gh-pages`.
+
