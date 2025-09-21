@@ -226,10 +226,6 @@ function App() {
     solvedCount,
   ])
 
-  const workspaceStatus = currentProgress?.solved
-    ? 'Every token is in the correct place. Review the grammar note before continuing.'
-    : 'Drag each token with your mouse or touch to build the sentence. Press “Solve” to lock any correct sequences.'
-
   const handleReorder = (nextFragments: TokenFragment[]) => {
     setSession((previous) => {
       if (!previous || previous.current == null) {
@@ -344,17 +340,6 @@ function App() {
 
   return (
     <div className="app" data-status={state.status}>
-      <header className="app__hero" role="banner">
-        <div className="hero__content">
-          <p className="hero__eyebrow">European Portuguese study tool</p>
-          <h1 className="hero__title">Portuguese Phrase Reorder Game</h1>
-          <p className="hero__subtitle">
-            Reorder shuffled sentence tokens to practice word order, contractions, and pronunciation cues. The interface adapts
-            to your system&apos;s {scheme} theme automatically.
-          </p>
-        </div>
-      </header>
-
       <main className="app__main" aria-live="polite" aria-busy={state.status === 'loading'}>
         <div className="layout">
           <section className="card" aria-label="Practice workspace">
@@ -376,7 +361,6 @@ function App() {
                 </div>
               ) : currentProblem && currentProgress ? (
                 <>
-                  <p className="workspace__status">{workspaceStatus}</p>
                   <TokenList
                     fragments={currentProgress.fragments}
                     solutionTokens={currentProblem.tokens}
@@ -418,27 +402,6 @@ function App() {
             </footer>
           </section>
 
-          <section className="info card card--surface" aria-labelledby="how-it-works">
-            <header className="card__header">
-              <div>
-                <p className="card__eyebrow">What to expect</p>
-                <h2 id="how-it-works" className="card__title">
-                  Practice overview
-                </h2>
-              </div>
-            </header>
-            <div className="card__body">
-              <ol className="info__steps">
-                <li>Review the shuffled Portuguese tokens displayed in the workspace.</li>
-                <li>Drag tokens into position to form a grammatically correct sentence.</li>
-                <li>Press <strong>Solve</strong> to lock correct sequences, merge them, and reveal study notes.</li>
-              </ol>
-              <p className="info__note">
-                Notes explaining contractions and grammar will appear after the full solution is correct. A restart option becomes
-                available once you solve every prompt.
-              </p>
-            </div>
-          </section>
         </div>
       </main>
     </div>
