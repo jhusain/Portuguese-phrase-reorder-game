@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-labelledby="title desc">
+  <title id="title">Portuguese Phrase Reorder Game icon</title>
+  <desc id="desc">Compact PT monogram inside a rounded tile.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="192" y2="192" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#17223b" />
+      <stop offset="1" stop-color="#2c7a7b" />
+    </linearGradient>
+    <linearGradient id="highlight" x1="36" y1="28" x2="156" y2="164" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f5f3ff" stop-opacity="0.95" />
+      <stop offset="1" stop-color="#c3dafe" stop-opacity="0.85" />
+    </linearGradient>
+  </defs>
+  <rect x="12" y="12" width="168" height="168" rx="36" fill="url(#bg)" />
+  <path
+    fill="none"
+    stroke="url(#highlight)"
+    stroke-width="14"
+    stroke-linecap="round"
+    d="M52 58h58c16.569 0 30 13.431 30 30s-13.431 30-30 30h-24v12" />
+  <path
+    fill="url(#highlight)"
+    d="M64 140H46c-6.627 0-12-5.373-12-12V52c0-6.627 5.373-12 12-12h18c26.51 0 48 21.49 48 48s-21.49 48-48 48Zm0-84h-14v72h14c19.882 0 36-16.118 36-36s-16.118-36-36-36Z" />
+  <path
+    fill="url(#highlight)"
+    d="M148 140h-18c-6.627 0-12-5.373-12-12V52c0-6.627 5.373-12 12-12h18c6.627 0 12 5.373 12 12v76c0 6.627-5.373 12-12 12Zm-4-84h-10v72h10V56Z" />
+</svg>

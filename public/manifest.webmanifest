@@ -1,0 +1,25 @@
+{
+  "id": "/portuguese-phrase-reorder-game/",
+  "name": "Portuguese Phrase Reorder Game",
+  "short_name": "PT Reorder",
+  "description": "Reorder shuffled European Portuguese tokens to practice grammar and pronunciation patterns.",
+  "start_url": "/portuguese-phrase-reorder-game/",
+  "scope": "/portuguese-phrase-reorder-game/",
+  "display": "standalone",
+  "background_color": "#17223b",
+  "theme_color": "#17223b",
+  "icons": [
+    {
+      "src": "icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

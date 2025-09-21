@@ -6,6 +6,11 @@ export interface FetchProblemsOptions {
   signal?: AbortSignal
 }
 
+export interface ProblemSetLoadResult {
+  problems: ProblemSet
+  hash: string
+}
+
 function isProblem(value: unknown): value is Problem {
   if (typeof value !== 'object' || value === null) {
     return false
@@ -36,7 +41,20 @@ function normalizeProblems(data: unknown): ProblemSet {
   })
 }
 
-export async function fetchProblems(options: FetchProblemsOptions = {}): Promise<ProblemSet> {
+export function createProblemSetHash(problems: ProblemSet): string {
+  const digestSource = problems
+    .map((problem) => `${problem.tokens.join('\u0000')}\u0001${problem.note}`)
+    .join('\u0002')
+
+  let hash = 0
+  for (let index = 0; index < digestSource.length; index += 1) {
+    hash = (hash * 31 + digestSource.charCodeAt(index)) | 0
+  }
+
+  return `v1-${(hash >>> 0).toString(36)}`
+}
+
+export async function fetchProblems(options: FetchProblemsOptions = {}): Promise<ProblemSetLoadResult> {
   const { signal } = options
 
   const response = await fetch(PROBLEMS_URL, {
@@ -49,7 +67,10 @@ export async function fetchProblems(options: FetchProblemsOptions = {}): Promise
   }
 
   const payload = (await response.json()) as unknown
-  return normalizeProblems(payload)
+  const problems = normalizeProblems(payload)
+  const hash = createProblemSetHash(problems)
+
+  return { problems, hash }
 }
 
 export function getProblemsUrl(): string {

@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import TokenList from './components/TokenList'
 import { fetchProblems } from './data/problems'
 import type { ColorScheme, Problem, TokenFragment } from './types'
 import { createFragmentId, evaluateFragments } from './utils/evaluate'
 import { shuffle } from './utils/shuffle'
+import { usePersistentState } from './hooks/usePersistentState'
 
 type ProblemsState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'success'; problems: Problem[] }
+  | { status: 'success'; problems: Problem[]; hash: string }
 
 type StatusMessage = {
   title: string
@@ -21,6 +22,7 @@ interface ProblemProgress {
 }
 
 interface SessionState {
+  seed: string
   current: number | null
   queue: number[]
   progress: ProblemProgress[]
@@ -78,7 +80,7 @@ function createInitialFragments(problem: Problem, seed: string): TokenFragment[]
 
 function createSession(problems: Problem[], seed: string): SessionState {
   if (problems.length === 0) {
-    return { current: null, queue: [], progress: [] }
+    return { seed, current: null, queue: [], progress: [] }
   }
 
   const order = problems.map((_, index) => index)
@@ -89,7 +91,7 @@ function createSession(problems: Problem[], seed: string): SessionState {
     solved: false,
   }))
 
-  return { current, queue, progress }
+  return { seed, current, queue, progress }
 }
 
 function App() {
@@ -106,14 +108,20 @@ function App() {
   const [sessionSeed] = useState(() => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`)
   const [state, setState] = useState<ProblemsState>({ status: 'loading' })
   const [sessionVersion, setSessionVersion] = useState(0)
-  const [session, setSession] = useState<SessionState | null>(null)
+  const sessionInitialState = useCallback((): SessionState | null => null, [])
+  const storageKey = state.status === 'success' ? `session:${state.hash}` : null
+  const [session, setSession, sessionPersistence] = usePersistentState<SessionState | null>(
+    storageKey,
+    sessionInitialState,
+  )
+  const sessionHydrated = sessionPersistence.hydrated
 
   useEffect(() => {
     const abortController = new AbortController()
 
     fetchProblems({ signal: abortController.signal })
-      .then((problems) => {
-        setState({ status: 'success', problems })
+      .then(({ problems, hash }) => {
+        setState({ status: 'success', problems, hash })
       })
       .catch((error) => {
         if (abortController.signal.aborted) {
@@ -134,12 +142,24 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (state.status === 'success') {
-      setSession(createSession(state.problems, `${sessionSeed}-${sessionVersion}`))
-    } else {
-      setSession(null)
+    if (state.status !== 'success' || !sessionHydrated) {
+      return
     }
-  }, [state, sessionSeed, sessionVersion])
+
+    const nextSeed = `${sessionSeed}-${sessionVersion}`
+
+    setSession((previous) => {
+      if (
+        previous &&
+        previous.seed === nextSeed &&
+        previous.progress.length === state.problems.length
+      ) {
+        return previous
+      }
+
+      return createSession(state.problems, nextSeed)
+    })
+  }, [state, sessionHydrated, sessionSeed, sessionVersion, setSession])
 
   const totalProblems = state.status === 'success' ? state.problems.length : 0
 
@@ -158,6 +178,13 @@ function App() {
       }
     }
 
+    if (state.status === 'success' && !sessionHydrated && state.problems.length > 0) {
+      return {
+        title: 'Restoring your session…',
+        detail: 'Rebuilding your saved workspace using the last session on this device.',
+      }
+    }
+
     if (state.status === 'success' && state.problems.length === 0) {
       return {
         title: 'No practice prompts available',
@@ -166,16 +193,19 @@ function App() {
     }
 
     return null
-  }, [state])
+  }, [state, sessionHydrated])
 
-  const currentIndex = session?.current ?? null
+  const hasSession = sessionHydrated && session !== null
+  const currentIndex = hasSession ? session.current : null
   const currentProblem =
-    state.status === 'success' && currentIndex != null ? state.problems[currentIndex] : null
-  const currentProgress = currentIndex != null && session ? session.progress[currentIndex] : null
+    hasSession && state.status === 'success' && currentIndex != null
+      ? state.problems[currentIndex]
+      : null
+  const currentProgress = hasSession && currentIndex != null ? session.progress[currentIndex] : null
 
-  const solvedCount = session ? session.progress.filter((entry) => entry.solved).length : 0
-  const remainingQueue = session?.queue.length ?? 0
-  const allSolved = totalProblems > 0 && solvedCount === totalProblems
+  const solvedCount = hasSession ? session.progress.filter((entry) => entry.solved).length : 0
+  const remainingQueue = hasSession ? session.queue.length : 0
+  const allSolved = hasSession && totalProblems > 0 && solvedCount === totalProblems
 
   const problemEyebrow = useMemo(() => {
     if (statusMessage) {
@@ -339,7 +369,11 @@ function App() {
         </div>
       </header>
 
-      <main className="app__main" aria-live="polite" aria-busy={state.status === 'loading'}>
+      <main
+        className="app__main"
+        aria-live="polite"
+        aria-busy={state.status === 'loading' || (state.status === 'success' && !sessionHydrated)}
+      >
         <div className="layout">
           <section className="card" aria-label="Practice workspace">
             <header className="card__header">
