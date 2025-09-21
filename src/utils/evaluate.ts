@@ -15,10 +15,6 @@ export function createFragmentId(indices: readonly number[]): string {
   return `fragment-${normalized.join('-')}`
 }
 
-function normalizeIndices(indices: readonly number[]): number[] {
-  return [...indices].sort((a, b) => a - b)
-}
-
 export function evaluateFragments(
   fragments: readonly TokenFragment[],
   solutionLength: number,
@@ -30,67 +26,50 @@ export function evaluateFragments(
   }
 
   const seen = new Set<number>()
-  const positions: Array<{ fragmentIndex: number; originalIndex: number }> = []
-  const fragmentPositions: number[][] = fragments.map(() => [])
+  const orderedIndices: number[] = []
 
-  fragments.forEach((fragment, fragmentIndex) => {
+  fragments.forEach((fragment) => {
     fragment.indices.forEach((originalIndex) => {
       if (seen.has(originalIndex)) {
         throw new Error('Encountered duplicate token indices while evaluating fragments.')
       }
-      seen.add(originalIndex)
 
-      const positionIndex = positions.length
-      positions.push({ fragmentIndex, originalIndex })
-      fragmentPositions[fragmentIndex].push(positionIndex)
+      seen.add(originalIndex)
+      orderedIndices.push(originalIndex)
     })
   })
 
-  const tokensCorrect = positions.map((position, positionIndex) => position.originalIndex === positionIndex)
-
-  const fragmentCorrect = fragmentPositions.map((positionIndexes) =>
-    positionIndexes.length > 0 && positionIndexes.every((positionIndex) => tokensCorrect[positionIndex]),
+  const tokensCorrect = orderedIndices.map(
+    (originalIndex, positionIndex) => originalIndex === positionIndex,
   )
+  const lockedCount = tokensCorrect.reduce((count, correct) => (correct ? count + 1 : count), 0)
 
-  const result: TokenFragment[] = []
-  let lockedCount = 0
+  const groups: Array<{ indices: number[]; locked: boolean }> = []
 
-  fragments.forEach((fragment, index) => {
-    const sortedIndices = normalizeIndices(fragment.indices)
-    if (fragmentCorrect[index]) {
-      lockedCount += sortedIndices.length
+  orderedIndices.forEach((originalIndex, positionIndex) => {
+    const isLocked = tokensCorrect[positionIndex]
+    const previousGroup = groups[groups.length - 1]
 
-      const previous = result[result.length - 1]
-      if (previous && previous.locked) {
-        const previousTail = previous.indices[previous.indices.length - 1]
-        if (previousTail + 1 === sortedIndices[0]) {
-          const combinedIndices = [...previous.indices, ...sortedIndices]
-          result[result.length - 1] = {
-            id: createFragmentId(combinedIndices),
-            indices: combinedIndices,
-            locked: true,
-          }
-          return
-        }
-      }
-
-      result.push({
-        id: createFragmentId(sortedIndices),
-        indices: sortedIndices,
-        locked: true,
-      })
+    if (
+      previousGroup &&
+      previousGroup.locked === isLocked &&
+      previousGroup.indices[previousGroup.indices.length - 1] + 1 === originalIndex
+    ) {
+      previousGroup.indices.push(originalIndex)
       return
     }
 
-    result.push({
-      id: createFragmentId(sortedIndices),
-      indices: sortedIndices,
-      locked: false,
-    })
+    groups.push({ indices: [originalIndex], locked: isLocked })
   })
 
+  const fragmentsResult: TokenFragment[] = groups.map(({ indices, locked }) => ({
+    id: createFragmentId(indices),
+    indices: [...indices],
+    locked,
+  }))
+
   return {
-    fragments: result,
+    fragments: fragmentsResult,
     lockedCount,
     isSolved: lockedCount === solutionLength,
   }
