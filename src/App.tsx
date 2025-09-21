@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import TokenList from './components/TokenList'
-import { fetchProblems } from './data/problems'
+import { createProblemSetHash, fetchProblems } from './data/problems'
+import { usePersistentState } from './hooks/usePersistentState'
 import type { ColorScheme, Problem, TokenFragment } from './types'
 import { createFragmentId, evaluateFragments } from './utils/evaluate'
 import { shuffle } from './utils/shuffle'
@@ -8,7 +9,7 @@ import { shuffle } from './utils/shuffle'
 type ProblemsState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'success'; problems: Problem[] }
+  | { status: 'success'; problems: Problem[]; hash: string }
 
 type StatusMessage = {
   title: string
@@ -92,6 +93,14 @@ function createSession(problems: Problem[], seed: string): SessionState {
   return { current, queue, progress }
 }
 
+function createSessionSeed(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+}
+
+function createRandomizedSession(problems: Problem[]): SessionState {
+  return createSession(problems, createSessionSeed())
+}
+
 function App() {
   const scheme = usePreferredColorScheme()
 
@@ -103,17 +112,30 @@ function App() {
     document.documentElement.setAttribute('data-theme', scheme)
   }, [scheme])
 
-  const [sessionSeed] = useState(() => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`)
   const [state, setState] = useState<ProblemsState>({ status: 'loading' })
-  const [sessionVersion, setSessionVersion] = useState(0)
-  const [session, setSession] = useState<SessionState | null>(null)
+  const problems = state.status === 'success' ? state.problems : null
+  const problemHash = state.status === 'success' ? state.hash : null
+
+  const sessionInitializer = useCallback((): SessionState | null => {
+    if (!problems) {
+      return null
+    }
+
+    return createRandomizedSession(problems)
+  }, [problems])
+
+  const [session, setSession] = usePersistentState<SessionState | null>(
+    problemHash ? `portuguese-reorder-session:${problemHash}` : null,
+    sessionInitializer,
+  )
 
   useEffect(() => {
     const abortController = new AbortController()
 
     fetchProblems({ signal: abortController.signal })
       .then((problems) => {
-        setState({ status: 'success', problems })
+        const hash = createProblemSetHash(problems)
+        setState({ status: 'success', problems, hash })
       })
       .catch((error) => {
         if (abortController.signal.aborted) {
@@ -133,15 +155,7 @@ function App() {
     }
   }, [])
 
-  useEffect(() => {
-    if (state.status === 'success') {
-      setSession(createSession(state.problems, `${sessionSeed}-${sessionVersion}`))
-    } else {
-      setSession(null)
-    }
-  }, [state, sessionSeed, sessionVersion])
-
-  const totalProblems = state.status === 'success' ? state.problems.length : 0
+  const totalProblems = problems?.length ?? 0
 
   const statusMessage: StatusMessage | null = useMemo(() => {
     if (state.status === 'loading') {
@@ -158,7 +172,7 @@ function App() {
       }
     }
 
-    if (state.status === 'success' && state.problems.length === 0) {
+    if (state.status === 'success' && totalProblems === 0) {
       return {
         title: 'No practice prompts available',
         detail: 'Add entries to problems.json to begin creating reorder challenges.',
@@ -166,11 +180,10 @@ function App() {
     }
 
     return null
-  }, [state])
+  }, [state, totalProblems])
 
   const currentIndex = session?.current ?? null
-  const currentProblem =
-    state.status === 'success' && currentIndex != null ? state.problems[currentIndex] : null
+  const currentProblem = problems && currentIndex != null ? problems[currentIndex] : null
   const currentProgress = currentIndex != null && session ? session.progress[currentIndex] : null
 
   const solvedCount = session ? session.progress.filter((entry) => entry.solved).length : 0
@@ -243,12 +256,15 @@ function App() {
     }
 
     setSession((previous) => {
-      if (!previous || previous.current == null) {
+      if (!previous || previous.current == null || !problems) {
         return previous
       }
 
       const activeIndex = previous.current
-      const problem = state.problems[activeIndex]
+      const problem = problems[activeIndex]
+      if (!problem) {
+        return previous
+      }
       const progressEntry = previous.progress[activeIndex]
 
       const evaluation = evaluateFragments(progressEntry.fragments, problem.tokens.length)
@@ -314,11 +330,11 @@ function App() {
   }
 
   const handleRestart = () => {
-    if (state.status !== 'success' || state.problems.length === 0) {
+    if (!problems || problems.length === 0) {
       return
     }
 
-    setSessionVersion((value) => value + 1)
+    setSession(() => createRandomizedSession(problems))
   }
 
   const canSolve = Boolean(currentProgress && !currentProgress.solved)
