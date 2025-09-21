@@ -55,3 +55,21 @@ export async function fetchProblems(options: FetchProblemsOptions = {}): Promise
 export function getProblemsUrl(): string {
   return PROBLEMS_URL
 }
+
+function hashText(value: string): number {
+  let hash = 0x811c9dc5
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index)
+    hash = Math.imul(hash, 0x01000193)
+  }
+
+  return hash >>> 0
+}
+
+export function createProblemSetHash(problems: ProblemSet): string {
+  const serialized = JSON.stringify(problems)
+  const digest = hashText(serialized).toString(16).padStart(8, '0')
+  const lengthComponent = serialized.length.toString(16).padStart(6, '0')
+
+  return `problems-${lengthComponent}-${digest}`
+}
