@@ -20,8 +20,8 @@ function Token({ fragment, text, dropIndicator }: TokenProps) {
   const { tabIndex, ...restAttributes } = sortableAttributes
 
   const style: CSSProperties = {
-    transform: transform ? CSS.Transform.toString(transform) : undefined,
-    transition,
+    transform: !isDragging && transform ? CSS.Transform.toString(transform) : undefined,
+    transition: isDragging ? undefined : transition,
   }
 
   const resolvedTabIndex = fragment.locked ? -1 : tabIndex ?? 0
@@ -33,13 +33,24 @@ function Token({ fragment, text, dropIndicator }: TokenProps) {
       style={style}
       data-locked={fragment.locked ? 'true' : undefined}
       data-dragging={isDragging ? 'true' : undefined}
-      data-drop-indicator={dropIndicator ?? undefined}
       tabIndex={resolvedTabIndex}
       aria-disabled={fragment.locked || undefined}
       {...restAttributes}
       {...(fragment.locked ? undefined : listeners)}
     >
+      <span
+        className={styles.indicator}
+        data-side="left"
+        data-visible={dropIndicator === 'before' ? 'true' : undefined}
+        aria-hidden="true"
+      />
       <span className={styles.text}>{text}</span>
+      <span
+        className={styles.indicator}
+        data-side="right"
+        data-visible={dropIndicator === 'after' ? 'true' : undefined}
+        aria-hidden="true"
+      />
     </li>
   )
 }
