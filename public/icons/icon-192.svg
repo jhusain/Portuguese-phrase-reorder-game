@@ -1,0 +1,22 @@
+<svg width="192" height="192" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="flagGradient" x1="64" y1="64" x2="448" y2="448" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0B7036" />
+      <stop offset="0.5" stop-color="#0B7036" />
+      <stop offset="0.5" stop-color="#C0272D" />
+      <stop offset="1" stop-color="#C0272D" />
+    </linearGradient>
+    <radialGradient id="shieldGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 228) rotate(90) scale(220)">
+      <stop stop-color="#FDF5D9" stop-opacity="0.9" />
+      <stop offset="1" stop-color="#F6C343" />
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#flagGradient)" />
+  <circle cx="256" cy="256" r="164" fill="url(#shieldGlow)" />
+  <circle cx="256" cy="256" r="132" fill="white" fill-opacity="0.9" />
+  <rect x="232" y="148" width="48" height="216" rx="22" fill="#0B7036" />
+  <rect x="148" y="232" width="216" height="48" rx="22" fill="#0B7036" />
+  <circle cx="256" cy="256" r="76" fill="#C0272D" fill-opacity="0.88" />
+  <circle cx="256" cy="256" r="92" stroke="#F6C343" stroke-width="18" opacity="0.85" />
+  <circle cx="256" cy="256" r="28" fill="white" fill-opacity="0.85" />
+</svg>
