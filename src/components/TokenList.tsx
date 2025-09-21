@@ -94,31 +94,64 @@ function TokenList({ fragments, solutionTokens, onReorder }: TokenListProps) {
       return
     }
 
-    const position: 'before' | 'after' = overIndex > oldIndex ? 'after' : 'before'
+    const { delta } = event
+    const translatedRect = active.rect.current.translated
+    const initialRect = active.rect.current.initial
+    const overRect = over.rect
+
+    if (!overRect) {
+      setIndicator(null)
+      return
+    }
+
+    let pointerX: number | null = null
+
+    if (translatedRect) {
+      pointerX = translatedRect.left + translatedRect.width / 2
+    } else if (initialRect) {
+      pointerX = initialRect.left + delta.x + initialRect.width / 2
+    }
+
+    if (pointerX === null) {
+      setIndicator(null)
+      return
+    }
+
+    const overCenterX = overRect.left + overRect.width / 2
+
+    const position: 'before' | 'after' = pointerX <= overCenterX ? 'before' : 'after'
     setIndicator({ targetId: overId, position })
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
+    const { active } = event
+    const finalIndicator = indicator
 
     setActiveId(null)
     setIndicator(null)
 
-    if (!over) {
+    if (!finalIndicator) {
       return
     }
 
     const activeId = active.id as string
-    const overId = over.id as string
+    const oldIndex = fragments.findIndex((fragment) => fragment.id === activeId)
+    const targetIndex = fragments.findIndex((fragment) => fragment.id === finalIndicator.targetId)
 
-    if (activeId === overId) {
+    if (oldIndex === -1 || targetIndex === -1) {
       return
     }
 
-    const oldIndex = fragments.findIndex((fragment) => fragment.id === activeId)
-    const newIndex = fragments.findIndex((fragment) => fragment.id === overId)
+    let newIndex = targetIndex
+    if (finalIndicator.position === 'after') {
+      newIndex += 1
+    }
 
-    if (oldIndex === -1 || newIndex === -1) {
+    if (oldIndex < newIndex) {
+      newIndex -= 1
+    }
+
+    if (newIndex === oldIndex) {
       return
     }
 
@@ -165,6 +198,7 @@ function TokenList({ fragments, solutionTokens, onReorder }: TokenListProps) {
             className={styles.token}
             data-locked={activeFragment.locked ? 'true' : undefined}
             data-dragging="true"
+            data-overlay="true"
           >
             <span className={styles.text}>{activeText}</span>
           </div>
