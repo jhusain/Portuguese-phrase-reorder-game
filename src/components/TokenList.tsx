@@ -11,6 +11,7 @@ import {
   type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
+import { snapCenterToCursor } from '@dnd-kit/modifiers'
 import {
   SortableContext,
   arrayMove,
@@ -143,6 +144,7 @@ function TokenList({ fragments, solutionTokens, onReorder }: TokenListProps) {
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
+      modifiers={[snapCenterToCursor]}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragCancel={handleDragCancel}
